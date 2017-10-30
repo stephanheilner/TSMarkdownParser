@@ -13,11 +13,11 @@ Pod::Spec.new do |s|
   s.license      = "MIT" 
   s.authors      = { "Tobias Sundstrand" => "tobias.sundstrand@gmail.com", "Antoine Cœur" => "" }
   s.social_media_url   = "https://twitter.com/laptobbe"
-  s.ios.deployment_target = "6.0"
-  s.tvos.deployment_target = "9.0"
-  s.osx.deployment_target = "10.7"
+  s.ios.deployment_target = "8.0"
+  s.tvos.deployment_target = "10.0"
+  s.osx.deployment_target = "10.9"
   s.source       = { :git => "https://github.com/laptobbe/TSMarkdownParser.git", :tag => s.version.to_s }
-  s.source_files  = "TSMarkdownParser/**/*.{h,m}"
+  s.source_files  = "TSMarkdownParser/**/*.{h,m,swift}"
   s.requires_arc = true
   s.ios.framework = 'UIKit'
   s.tvos.framework = 'UIKit'

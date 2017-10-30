@@ -16,7 +16,15 @@ typedef NSImage UIImage;
 typedef NSFont UIFont;
 #endif
 
+@interface TSMarkdownParser()
+
+@property (nonatomic, assign) NSUInteger defaultSize;
+
+@end
+
 @implementation TSMarkdownParser
+
+@synthesize defaultSize;
 
 - (instancetype)init {
     self = [super init];
@@ -24,9 +32,9 @@ typedef NSFont UIFont;
         return nil;
     
 #if TARGET_OS_TV
-    NSUInteger defaultSize = 29;
+    defaultSize = 29;
 #else
-    NSUInteger defaultSize = 12;
+    defaultSize = 12;
 #endif
     
     self.defaultAttributes = @{ NSFontAttributeName: [UIFont systemFontOfSize:defaultSize] };
@@ -64,6 +72,8 @@ typedef NSFont UIFont;
 #else
     _emphasisAttributes = @{ NSFontAttributeName: [[NSFontManager sharedFontManager] convertFont:[UIFont systemFontOfSize:defaultSize] toHaveTrait:NSItalicFontMask] };
 #endif
+    
+    _strongAndEmphasisAttributes = @{ NSFontAttributeName: [self boldItalicsFont] };
     
     return self;
 }
@@ -182,6 +192,10 @@ typedef NSFont UIFont;
         [attributedString addAttributes:weakParser.emphasisAttributes range:range];
     }];
     
+    [defaultParser addStrongAndEmphasisParsingWithFormattingBlock:^(NSMutableAttributedString *attributedString, NSRange range) {
+        [attributedString addAttributes:weakParser.strongAndEmphasisAttributes range:range];
+    }];
+    
     /* unescaping parsing */
     
     [defaultParser addCodeUnescapingParsingWithFormattingBlock:^(NSMutableAttributedString *attributedString, NSRange range) {
@@ -222,6 +236,7 @@ static NSString *const TSMarkdownLinkRegex          = @"\\[[^\\[]*?\\]\\([^\\)]*
 static NSString *const TSMarkdownMonospaceRegex     = @"(`+)(\\s*.*?[^`]\\s*)(\\1)(?!`)";
 static NSString *const TSMarkdownStrongRegex        = @"(\\*\\*|__)(.+?)(\\1)";
 static NSString *const TSMarkdownEmRegex            = @"(\\*|_)(.+?)(\\1)";
+static NSString *const TSMarkdownStrongEmRegex      = @"(((\\*\\*\\*)(.|\\s)*(\\*\\*\\*))|((___)(.|\\s)*(___)))";
 
 #pragma mark escaping parsing
 
@@ -412,6 +427,10 @@ static NSString *const TSMarkdownEmRegex            = @"(\\*|_)(.+?)(\\1)";
     [self addEnclosedParsingWithPattern:TSMarkdownEmRegex formattingBlock:formattingBlock];
 }
 
+- (void)addStrongAndEmphasisParsingWithFormattingBlock:(TSMarkdownParserFormattingBlock)formattingBlock {
+    [self addEnclosedParsingWithPattern:TSMarkdownStrongEmRegex formattingBlock:formattingBlock];
+}
+
 #pragma mark link detection
 
 - (void)addLinkDetectionWithFormattingBlock:(TSMarkdownParserFormattingBlock)formattingBlock __attribute__((deprecated("use addLinkDetectionWithLinkFormattingBlock: instead"))) {
@@ -469,6 +488,11 @@ static NSString *const TSMarkdownEmRegex            = @"(\\*|_)(.+?)(\\1)";
         NSString *unescapedString = [TSMarkdownParser stringWithHexaString:matchString atIndex:0];
         [attributedString replaceCharactersInRange:match.range withString:unescapedString];
     }];
+}
+
+- (UIFont *)boldItalicsFont {
+    UIFontDescriptor *fontDescriptor = [[[UIFont systemFontOfSize:defaultSize] fontDescriptor] fontDescriptorWithSymbolicTraits:(UIFontDescriptorTraitBold | UIFontDescriptorTraitItalic)];
+    return [UIFont fontWithDescriptor:fontDescriptor size:defaultSize];
 }
 
 @end
