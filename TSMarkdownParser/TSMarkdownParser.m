@@ -65,6 +65,8 @@ typedef NSFont UIFont;
     _emphasisAttributes = @{ NSFontAttributeName: [[NSFontManager sharedFontManager] convertFont:[UIFont systemFontOfSize:defaultSize] toHaveTrait:NSItalicFontMask] };
 #endif
     
+    _strongAndEmphasisAttributes = @{ NSFontAttributeName: [UIFont fontWithDescriptor:[[[UIFont systemFontOfSize:defaultSize] fontDescriptor] fontDescriptorWithSymbolicTraits:(UIFontDescriptorTraitBold | UIFontDescriptorTraitItalic)] size:defaultSize] };
+    
     return self;
 }
 
@@ -182,6 +184,10 @@ typedef NSFont UIFont;
         [attributedString addAttributes:weakParser.emphasisAttributes range:range];
     }];
     
+    [defaultParser addStrongAndEmphasisParsingWithFormattingBlock:^(NSMutableAttributedString *attributedString, NSRange range) {
+        [attributedString addAttributes:weakParser.strongAndEmphasisAttributes range:range];
+    }];
+    
     /* unescaping parsing */
     
     [defaultParser addCodeUnescapingParsingWithFormattingBlock:^(NSMutableAttributedString *attributedString, NSRange range) {
@@ -222,6 +228,7 @@ static NSString *const TSMarkdownLinkRegex          = @"\\[[^\\[]*?\\]\\([^\\)]*
 static NSString *const TSMarkdownMonospaceRegex     = @"(`+)(\\s*.*?[^`]\\s*)(\\1)(?!`)";
 static NSString *const TSMarkdownStrongRegex        = @"(\\*\\*|__)(.+?)(\\1)";
 static NSString *const TSMarkdownEmRegex            = @"(\\*|_)(.+?)(\\1)";
+static NSString *const TSMarkdownStrongEmRegex      = @"(((\\*\\*\\*)(.|\\s)*(\\*\\*\\*))|((___)(.|\\s)*(___)))";
 
 #pragma mark escaping parsing
 
@@ -410,6 +417,10 @@ static NSString *const TSMarkdownEmRegex            = @"(\\*|_)(.+?)(\\1)";
 
 - (void)addEmphasisParsingWithFormattingBlock:(TSMarkdownParserFormattingBlock)formattingBlock {
     [self addEnclosedParsingWithPattern:TSMarkdownEmRegex formattingBlock:formattingBlock];
+}
+
+- (void)addStrongAndEmphasisParsingWithFormattingBlock:(TSMarkdownParserFormattingBlock)formattingBlock {
+    [self addEnclosedParsingWithPattern:TSMarkdownStrongEmRegex formattingBlock:formattingBlock];
 }
 
 #pragma mark link detection
