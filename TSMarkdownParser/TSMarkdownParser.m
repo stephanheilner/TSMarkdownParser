@@ -197,17 +197,16 @@ typedef NSFont UIFont;
     }];
     
     /* inline parsing */
-    
+    [defaultParser addStrongAndEmphasisParsingWithFormattingBlock:^(NSMutableAttributedString *attributedString, NSRange range) {
+        [attributedString addAttributes:weakParser.strongAndEmphasisAttributes range:range];
+    }];
+            
     [defaultParser addStrongParsingWithFormattingBlock:^(NSMutableAttributedString *attributedString, NSRange range) {
         [attributedString addAttributes:weakParser.strongAttributes range:range];
     }];
     
     [defaultParser addEmphasisParsingWithFormattingBlock:^(NSMutableAttributedString *attributedString, NSRange range) {
         [attributedString addAttributes:weakParser.emphasisAttributes range:range];
-    }];
-    
-    [defaultParser addStrongAndEmphasisParsingWithFormattingBlock:^(NSMutableAttributedString *attributedString, NSRange range) {
-        [attributedString addAttributes:weakParser.strongAndEmphasisAttributes range:range];
     }];
     
     /* unescaping parsing */
@@ -251,7 +250,8 @@ static NSString *const TSMarkdownLinkRegex          = @"\\[[^\\[]*?\\]\\([^\\)]*
 static NSString *const TSMarkdownMonospaceRegex     = @"(`+)(\\s*.*?[^`]\\s*)(\\1)(?!`)";
 static NSString *const TSMarkdownStrongRegex        = @"(\\*\\*|__)(.+?)(\\1)";
 static NSString *const TSMarkdownEmRegex            = @"(\\*|_)(.+?)(\\1)";
-static NSString *const TSMarkdownStrongEmRegex      = @"(((\\*\\*\\*)(.|\\s)*(\\*\\*\\*))|((___)(.|\\s)*(___)))";
+static NSString *const TSMarkdownStrongEmRegex      = @"(\\*\\*\\_)(.*?)(\\_\\*\\*)";
+static NSString *const TSMarkdownStrongEmRegex2     = @"(((\\*\\*\\*)(.|\\s)*(\\*\\*\\*))|((___)(.|\\s)*(___)))";
 
 #pragma mark escaping parsing
 
@@ -458,6 +458,7 @@ static NSString *const TSMarkdownStrongEmRegex      = @"(((\\*\\*\\*)(.|\\s)*(\\
 
 - (void)addStrongAndEmphasisParsingWithFormattingBlock:(TSMarkdownParserFormattingBlock)formattingBlock {
     [self addEnclosedParsingWithPattern:TSMarkdownStrongEmRegex formattingBlock:formattingBlock];
+    [self addEnclosedParsingWithPattern:TSMarkdownStrongEmRegex2 formattingBlock:formattingBlock];
 }
 
 #pragma mark link detection
