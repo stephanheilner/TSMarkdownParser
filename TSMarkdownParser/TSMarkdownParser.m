@@ -83,6 +83,36 @@ typedef NSFont UIFont;
     
     __weak TSMarkdownParser *weakParser = defaultParser;
     
+    /* autodetection */
+
+    [defaultParser addLinkDetectionWithLinkFormattingBlock:^(NSMutableAttributedString *attributedString, NSRange range, NSString * _Nullable link) {
+        if (!weakParser.skipLinkAttribute) {
+            __block BOOL alreadyLinked = NO;
+            [attributedString enumerateAttribute:NSLinkAttributeName
+                                         inRange:range
+                                         options:0
+                                      usingBlock:^(id _Nullable value, __unused NSRange range, BOOL * _Nonnull stop)
+             {
+                 if (value) {
+                     // this range has a link that overlaps with the autodetect range, so skip
+                     alreadyLinked = YES;
+                     *stop = YES;
+                 }
+             }];
+            if (alreadyLinked) {
+                return;
+            }
+            NSString *unescapedLink = [link stringByReplacingOccurrencesOfString:@"\\" withString:@""];
+            NSURL *url = [NSURL URLWithString:unescapedLink] ?: [NSURL URLWithString:
+                                                                 [unescapedLink stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
+
+            [attributedString addAttribute:NSLinkAttributeName
+                                     value:url
+                                     range:range];
+        }
+        [attributedString addAttributes:weakParser.linkAttributes range:range];
+    }];
+
     /* escaping parsing */
     
     [defaultParser addCodeEscapingParsing];
@@ -149,35 +179,6 @@ typedef NSFont UIFont;
                                          value:url
                                          range:range];
             }
-        }
-        [attributedString addAttributes:weakParser.linkAttributes range:range];
-    }];
-    
-    /* autodetection */
-    
-    [defaultParser addLinkDetectionWithLinkFormattingBlock:^(NSMutableAttributedString *attributedString, NSRange range, NSString * _Nullable link) {
-        if (!weakParser.skipLinkAttribute) {
-            __block BOOL alreadyLinked = NO;
-            [attributedString enumerateAttribute:NSLinkAttributeName
-                                         inRange:range
-                                         options:0
-                                      usingBlock:^(id _Nullable value, __unused NSRange range, BOOL * _Nonnull stop)
-             {
-                 if (value) {
-                     // this range has a link that overlaps with the autodetect range, so skip
-                     alreadyLinked = YES;
-                     *stop = YES;
-                 }
-             }];
-            if (alreadyLinked) {
-                return;
-            }
-            NSURL *url = [NSURL URLWithString:link] ?: [NSURL URLWithString:
-                                                        [link stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
-
-            [attributedString addAttribute:NSLinkAttributeName
-                                     value:url
-                                     range:range];
         }
         [attributedString addAttributes:weakParser.linkAttributes range:range];
     }];
