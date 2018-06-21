@@ -9,6 +9,12 @@
 #import "TSMarkdownParser.h"
 #if TARGET_OS_IPHONE
 #import <UIKit/UIKit.h>
+@implementation UIColor (ts)
+/// code compatibility layer for macOS 10.7 and 10.8
++ (UIColor *)colorWithSRGBRed:(CGFloat)red green:(CGFloat)green blue:(CGFloat)blue alpha:(CGFloat)alpha {
+    return [UIColor colorWithRed:red green:green blue:blue alpha:alpha];
+}
+@end
 #else
 #import <AppKit/AppKit.h>
 typedef NSColor UIColor;
@@ -55,23 +61,27 @@ typedef NSFont UIFont;
                            @{ NSFontAttributeName: [UIFont boldSystemFontOfSize:13] } ];
 #endif
     
+#if TARGET_OS_IPHONE
+    _emphasisAttributes = @{ NSFontAttributeName: [UIFont italicSystemFontOfSize:defaultSize] };
+#else
+    _emphasisAttributes = @{ NSFontAttributeName: [[NSFontManager sharedFontManager] convertFont:[UIFont systemFontOfSize:defaultSize] toHaveTrait:NSItalicFontMask] };
+#endif
+    _strongAttributes = @{ NSFontAttributeName: [UIFont boldSystemFontOfSize:defaultSize] };
+    
+    _strongAndEmphasisAttributes = @{ NSFontAttributeName: [UIFont fontWithDescriptor:[[[UIFont systemFontOfSize:defaultSize] fontDescriptor] fontDescriptorWithSymbolicTraits:(UIFontDescriptorTraitBold | UIFontDescriptorTraitItalic)] size:defaultSize] };
+    
     _listAttributes = @[];
-    _quoteAttributes = @[@{NSFontAttributeName: [UIFont fontWithName:@"HelveticaNeue-Italic" size:defaultSize]}];
+    // #69: avoiding crash if font is missing
+    _quoteAttributes = @[@{NSFontAttributeName: [UIFont fontWithName:@"HelveticaNeue-Italic" size:defaultSize] ?: [_emphasisAttributes objectForKey:NSFontAttributeName]}];
     
     _imageAttributes = @{};
     _linkAttributes = @{ NSForegroundColorAttributeName: [UIColor blueColor],
                          NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle) };
     
     // Courier New and Courier are the only monospace fonts compatible with watchOS 2
-    _monospaceAttributes = @{ NSFontAttributeName: [UIFont fontWithName:@"Courier New" size:defaultSize],
-                              NSForegroundColorAttributeName: [UIColor colorWithRed:0.95 green:0.54 blue:0.55 alpha:1] };
-    _strongAttributes = @{ NSFontAttributeName: [UIFont boldSystemFontOfSize:defaultSize] };
-    
-#if TARGET_OS_IPHONE
-    _emphasisAttributes = @{ NSFontAttributeName: [UIFont italicSystemFontOfSize:defaultSize] };
-#else
-    _emphasisAttributes = @{ NSFontAttributeName: [[NSFontManager sharedFontManager] convertFont:[UIFont systemFontOfSize:defaultSize] toHaveTrait:NSItalicFontMask] };
-#endif
+    // #69: avoiding crash if font is missing
+    _monospaceAttributes = @{ NSFontAttributeName: [UIFont fontWithName:@"Courier New" size:defaultSize] ?: [UIFont fontWithName:@"Courier" size:defaultSize] ?: [UIFont systemFontOfSize:defaultSize],
+                              NSForegroundColorAttributeName: [UIColor colorWithSRGBRed:0.95 green:0.54 blue:0.55 alpha:1] };
     
     _strongAndEmphasisAttributes = @{ NSFontAttributeName: [self boldItalicsFont] };
     
@@ -149,25 +159,39 @@ typedef NSFont UIFont;
     /* bracket parsing */
     
     [defaultParser addImageParsingWithLinkFormattingBlock:^(NSMutableAttributedString *attributedString, NSRange range, NSString * _Nullable link) {
-        UIImage *image = [UIImage imageNamed:link];
-        if (image) {
-            NSTextAttachment *imageAttachment = [NSTextAttachment new];
-            imageAttachment.image = image;
-            imageAttachment.bounds = CGRectMake(0, -5, image.size.width, image.size.height);
-            NSAttributedString *imgStr = [NSAttributedString attributedStringWithAttachment:imageAttachment];
-            [attributedString replaceCharactersInRange:range withAttributedString:imgStr];
-        } else {
-            if (!weakParser.skipLinkAttribute) {
-                NSURL *url = [NSURL URLWithString:link] ?: [NSURL URLWithString:
-                                                            [link stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
-                if (url.scheme) {
-                    [attributedString addAttribute:NSLinkAttributeName
-                                             value:url
-                                             range:range];
-                }
+#if !TARGET_OS_IPHONE
+#if defined(__MAC_10_13)
+        // macOS 10.11+ test compatible with Xcode 9+
+        // NSTextAttachment works on macOS 10.10 but is tricky for image support
+        if (@available(macOS 10.11, iOS 7.0, watchOS 2.0, tvOS 9.0, *)) {
+#else
+        // macOS 10.11+ test compatible with Xcode 8-
+        // NSTextAttachment works on macOS 10.10 but is tricky for image support
+        if (floor(NSFoundationVersionNumber) > NSFoundationVersionNumber10_10_Max) {
+#endif
+#else
+        {
+#endif
+            UIImage *image = [UIImage imageNamed:link];
+            if (image) {
+                NSTextAttachment *imageAttachment = [NSTextAttachment new];
+                imageAttachment.image = image;
+                imageAttachment.bounds = CGRectMake(0, -5, image.size.width, image.size.height);
+                NSAttributedString *imgStr = [NSAttributedString attributedStringWithAttachment:imageAttachment];
+                [attributedString replaceCharactersInRange:range withAttributedString:imgStr];
+                return;
             }
-            [attributedString addAttributes:weakParser.imageAttributes range:range];
         }
+        if (!weakParser.skipLinkAttribute) {
+            NSURL *url = [NSURL URLWithString:link] ?: [NSURL URLWithString:
+                                                        [link stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
+            if (url.scheme) {
+                [attributedString addAttribute:NSLinkAttributeName
+                                         value:url
+                                         range:range];
+            }
+        }
+        [attributedString addAttributes:weakParser.imageAttributes range:range];
     }];
     
     [defaultParser addLinkParsingWithLinkFormattingBlock:^(NSMutableAttributedString *attributedString, NSRange range, NSString * _Nullable link) {
@@ -212,7 +236,8 @@ typedef NSFont UIFont;
 {
     if (!attributesArray.count)
         return;
-    NSDictionary<NSString *, id> *attributes = level < attributesArray.count ? attributesArray[level] : attributesArray.lastObject;
+    // 'objectAtIndexedSubscript:' is only available on macOS 10.8 or newer
+    NSDictionary<NSString *, id> *attributes = level < attributesArray.count ? [attributesArray objectAtIndex:level] : attributesArray.lastObject;
     [attributedString addAttributes:attributes range:range];
 }
 
@@ -315,24 +340,38 @@ static NSString *const TSMarkdownStrongEmRegex2     = @"(((\\*\\*\\*)(.|\\s)*(\\
         NSUInteger imagePathStart = [attributedString.string rangeOfString:@"(" options:(NSStringCompareOptions)0 range:match.range].location;
         NSRange linkRange = NSMakeRange(imagePathStart, match.range.length + match.range.location - imagePathStart - 1);
         NSString *imagePath = [attributedString.string substringWithRange:NSMakeRange(linkRange.location + 1, linkRange.length - 1)];
-        UIImage *image = [UIImage imageNamed:imagePath];
-        if (image) {
-            NSTextAttachment *imageAttachment = [NSTextAttachment new];
-            imageAttachment.image = image;
-            imageAttachment.bounds = CGRectMake(0, -5, image.size.width, image.size.height);
-            NSAttributedString *imgStr = [NSAttributedString attributedStringWithAttachment:imageAttachment];
-            [attributedString replaceCharactersInRange:match.range withAttributedString:imgStr];
-            if (formattingBlock) {
-                formattingBlock(attributedString, NSMakeRange(match.range.location, imgStr.length));
+#if !TARGET_OS_IPHONE
+#if defined(__MAC_10_13)
+        // macOS 10.11+ test compatible with Xcode 9+
+        // NSTextAttachment works on macOS 10.10 but is tricky for image support
+        if (@available(macOS 10.11, iOS 7.0, watchOS 2.0, tvOS 9.0, *)) {
+#else
+        // macOS 10.11+ test compatible with Xcode 8-
+        // NSTextAttachment works on macOS 10.10 but is tricky for image support
+        if (floor(NSFoundationVersionNumber) > NSFoundationVersionNumber10_10_Max) {
+#endif
+#else
+        {
+#endif
+            UIImage *image = [UIImage imageNamed:imagePath];
+            if (image) {
+                NSTextAttachment *imageAttachment = [NSTextAttachment new];
+                imageAttachment.image = image;
+                imageAttachment.bounds = CGRectMake(0, -5, image.size.width, image.size.height);
+                NSAttributedString *imgStr = [NSAttributedString attributedStringWithAttachment:imageAttachment];
+                [attributedString replaceCharactersInRange:match.range withAttributedString:imgStr];
+                if (formattingBlock) {
+                    formattingBlock(attributedString, NSMakeRange(match.range.location, imgStr.length));
+                }
+                return;
             }
-        } else {
-            NSUInteger linkTextEndLocation = [attributedString.string rangeOfString:@"]" options:(NSStringCompareOptions)0 range:match.range].location;
-            NSRange linkTextRange = NSMakeRange(match.range.location + 2, linkTextEndLocation - match.range.location - 2);
-            NSString *alternativeText = [attributedString.string substringWithRange:linkTextRange];
-            [attributedString replaceCharactersInRange:match.range withString:alternativeText];
-            if (alternativeFormattingBlock) {
-                alternativeFormattingBlock(attributedString, NSMakeRange(match.range.location, alternativeText.length));
-            }
+        }
+        NSUInteger linkTextEndLocation = [attributedString.string rangeOfString:@"]" options:(NSStringCompareOptions)0 range:match.range].location;
+        NSRange linkTextRange = NSMakeRange(match.range.location + 2, linkTextEndLocation - match.range.location - 2);
+        NSString *alternativeText = [attributedString.string substringWithRange:linkTextRange];
+        [attributedString replaceCharactersInRange:match.range withString:alternativeText];
+        if (alternativeFormattingBlock) {
+            alternativeFormattingBlock(attributedString, NSMakeRange(match.range.location, alternativeText.length));
         }
     }];
 }
