@@ -439,12 +439,23 @@ static NSString *const TSMarkdownStrongEmRegex      = @"(((\\*\\*\\*)(.|\\s)*(\\
 - (void)addEnclosedParsingWithPattern:(NSString *)pattern formattingBlock:(TSMarkdownParserFormattingBlock)formattingBlock {
     NSRegularExpression *parsing = [NSRegularExpression regularExpressionWithPattern:pattern options:(NSRegularExpressionOptions)0 error:nil];
     [self addParsingRuleWithRegularExpression:parsing block:^(NSTextCheckingResult *match, NSMutableAttributedString *attributedString) {
-        // deleting trailing markdown
-        [attributedString deleteCharactersInRange:[match rangeAtIndex:3]];
-        // formatting string (may alter the length)
-        formattingBlock(attributedString, [match rangeAtIndex:2]);
-        // deleting leading markdown
-        [attributedString deleteCharactersInRange:[match rangeAtIndex:1]];
+        NSRange match3 = [match rangeAtIndex:3];
+        if (match3.location != NSNotFound) {
+            // deleting trailing markdown
+            [attributedString deleteCharactersInRange:match3];
+        }
+        
+        NSRange match2 = [match rangeAtIndex:2];
+        if (match2.location != NSNotFound) {
+            // formatting string (may alter the length)
+            formattingBlock(attributedString, match2);
+        }
+        
+        NSRange match1 = [match rangeAtIndex:1];
+        if (match1.location != NSNotFound) {
+            // deleting leading markdown
+            [attributedString deleteCharactersInRange:match1];
+        }
     }];
 }
 
