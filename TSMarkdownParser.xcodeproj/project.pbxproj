@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3342312B216558D900F0935C /* NSAttributedString+Markdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3342312A216558D800F0935C /* NSAttributedString+Markdown.swift */; };
 		3700F5841CAA637C0034AE2D /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 3700F5831CAA637C0034AE2D /* main.m */; };
 		3700F5871CAA637C0034AE2D /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3700F5861CAA637C0034AE2D /* AppDelegate.m */; };
 		3700F58A1CAA637C0034AE2D /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3700F5891CAA637C0034AE2D /* ViewController.m */; };
@@ -86,6 +87,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		33423129216558D800F0935C /* TSMarkdownParserLib-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "TSMarkdownParserLib-Bridging-Header.h"; sourceTree = "<group>"; };
+		3342312A216558D800F0935C /* NSAttributedString+Markdown.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSAttributedString+Markdown.swift"; sourceTree = "<group>"; };
 		3700F5801CAA637C0034AE2D /* TSMarkdownParserExample tvOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "TSMarkdownParserExample tvOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3700F5831CAA637C0034AE2D /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		3700F5851CAA637C0034AE2D /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -301,6 +304,7 @@
 		CC3C733B469527BABC08D90D /* TSMarkdownParser */ = {
 			isa = PBXGroup;
 			children = (
+				3342312A216558D800F0935C /* NSAttributedString+Markdown.swift */,
 				C824BD0C1CB8EE6100E9E299 /* CHANGELOG.md */,
 				F6F149C11A7CFB4200A24213 /* TSMarkdownParser.podspec */,
 				CC3C72A1BA2FA83330E38DEB /* Supporting Files */,
@@ -308,6 +312,7 @@
 				CC3C7B7AEA9B50B9BF782FC5 /* TSMarkdownParser.m */,
 				C81B78CF1C5483DF00A1DE36 /* TSBaseParser.h */,
 				C81B78D01C5483DF00A1DE36 /* TSBaseParser.m */,
+				33423129216558D800F0935C /* TSMarkdownParserLib-Bridging-Header.h */,
 			);
 			path = TSMarkdownParser;
 			sourceTree = "<group>";
@@ -564,6 +569,9 @@
 					C8414BC41CB114BC000C7921 = {
 						CreatedOnToolsVersion = 7.3;
 					};
+					CC3C704FF16FF7C75C832F3A = {
+						LastSwiftMigration = 1000;
+					};
 					F5A4F4411B36EF4100C4F56C = {
 						CreatedOnToolsVersion = 6.3.2;
 					};
@@ -728,6 +736,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C81B78D21C5483DF00A1DE36 /* TSBaseParser.m in Sources */,
+				3342312B216558D900F0935C /* NSAttributedString+Markdown.swift in Sources */,
 				CC3C78BB152404965D77F4DA /* TSMarkdownParser.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1045,18 +1054,23 @@
 		CC3C730126B95B11146003EF /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				DSTROOT = /tmp/TSMarkdownParser.dst;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "TSMarkdownParser/TSMarkdownParser-Prefix.pch";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = TSMarkdownParser;
 				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "TSMarkdownParser/TSMarkdownParserLib-Bridging-Header.h";
+				SWIFT_VERSION = 4.2;
 			};
 			name = Release;
 		};
 		CC3C75B20E774F01AA9D507C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "TSMarkdownParser/TSMarkdownParser-Prefix.pch";
 				INFOPLIST_FILE = "TSMarkdownParserTests/TSMarkdownParserTests-Info.plist";
@@ -1125,12 +1139,17 @@
 		CC3C7A22C12A4CACA538788A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				DSTROOT = /tmp/TSMarkdownParser.dst;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "TSMarkdownParser/TSMarkdownParser-Prefix.pch";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = TSMarkdownParser;
 				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "TSMarkdownParser/TSMarkdownParserLib-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 4.2;
 			};
 			name = Debug;
 		};
@@ -1186,6 +1205,7 @@
 		CC3C7FD1E0A254C798F8235C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "TSMarkdownParser/TSMarkdownParser-Prefix.pch";
 				INFOPLIST_FILE = "TSMarkdownParserTests/TSMarkdownParserTests-Info.plist";
