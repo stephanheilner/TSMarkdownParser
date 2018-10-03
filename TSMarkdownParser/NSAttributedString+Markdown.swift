@@ -89,7 +89,7 @@ public extension NSAttributedString {
                 
                 switch character {
                 case "\\", "`", "*", "_", "{", "}", "[", "]", "(", ")", "#", "+", "-", "!":
-                    stringToAppend = "\\\(character)"
+                    stringToAppend = "\(character)"
                 case "\n", "\u{2028}":
                     stringToAppend = "\(closingString)\(character)"
                     if !characterOnBulletedListLine && !characterOnNumberedListLine {
@@ -122,7 +122,7 @@ public extension NSAttributedString {
                         }
                         break
                     }
-                    stringToAppend = "\\\(character)"
+                    stringToAppend = "\(character)"
                 case nonBreakingSpaceCharacter:
                     if characterOnBulletedListLine || characterOnNumberedListLine {
                         break
