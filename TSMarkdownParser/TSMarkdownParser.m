@@ -89,6 +89,8 @@ typedef NSFont UIFont;
     
     /* escaping parsing */
     
+    [defaultParser addUnderscoreReplacementParsing];
+
     [defaultParser addCodeEscapingParsing];
     
     [defaultParser addEscapingParsing];
@@ -256,8 +258,20 @@ static NSString *const TSMarkdownMonospaceRegex     = @"(`+)(\\s*.*?[^`]\\s*)(\\
 static NSString *const TSMarkdownStrongRegex        = @"(\\*\\*|__)(.+?)(\\1)";
 static NSString *const TSMarkdownEmRegex            = @"(\\*|_)(.+?)(\\1)";
 static NSString *const TSMarkdownStrongEmRegex      = @"(((\\*\\*\\*)(.|\\s)*(\\*\\*\\*))|((___)(.|\\s)*(___)))";
+static NSString *const TSMarkdownUnderscoreReplacementRegex = @"(_{4,})";
 
 #pragma mark escaping parsing
+
+- (void)addUnderscoreReplacementParsing {
+    NSRegularExpression *parsing = [NSRegularExpression regularExpressionWithPattern:TSMarkdownUnderscoreReplacementRegex options:NSRegularExpressionDotMatchesLineSeparators error:nil];
+    [self addParsingRuleWithRegularExpression:parsing block:^(NSTextCheckingResult *match, NSMutableAttributedString *attributedString) {
+        NSRange range = [match rangeAtIndex:1];
+        // replace groups of 4 or more underscores (low line: u005f) with unicode fullwidth underscore (fullwidth low line: uff3f)
+        NSString *matchString = [attributedString attributedSubstringFromRange:range].string;
+        NSString *replacementString = [matchString stringByReplacingOccurrencesOfString:@"_" withString:@"＿"];
+        [attributedString replaceCharactersInRange:range withString:replacementString];
+    }];
+}
 
 - (void)addCodeEscapingParsing {
     NSRegularExpression *parsing = [NSRegularExpression regularExpressionWithPattern:TSMarkdownCodeEscapingRegex options:NSRegularExpressionDotMatchesLineSeparators error:nil];

@@ -125,6 +125,8 @@ typedef void (^TSMarkdownParserLinkFormattingBlock)(NSMutableAttributedString *a
 - (void)addMonospacedParsingWithFormattingBlock:(TSMarkdownParserFormattingBlock)formattingBlock;
 /// accepts "**text**", "__text__"
 - (void)addStrongParsingWithFormattingBlock:(TSMarkdownParserFormattingBlock)formattingBlock;
+/// accepts groups of 4 or more underscores (low line: u005f) & replaces them with unicode fullwidth underscores (fullwidth low line: uff3f)
+- (void)addUnderscoreReplacementParsing;
 /// accepts "*text*", "_text_"
 - (void)addEmphasisParsingWithFormattingBlock:(TSMarkdownParserFormattingBlock)formattingBlock;
 /// accepts "***text***", "___text___"
